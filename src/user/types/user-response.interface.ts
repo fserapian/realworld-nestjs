@@ -1,5 +1,5 @@
 import { UserType } from './user.type';
 
-export interface UserResponseInterface {
+export interface UserResponse {
   user: UserType & { token: string }
 }

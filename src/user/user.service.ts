@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
-import { UserResponseInterface } from './types/user-response.interface';
+import { UserResponse } from './types/user-response.interface';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JWT_SECRET } from 'src/config';
 import { sign } from 'jsonwebtoken';
@@ -74,7 +74,7 @@ export class UserService {
     }, JWT_SECRET);
   }
 
-  buildUserResponse(user: User): UserResponseInterface {
+  buildUserResponse(user: User): UserResponse {
     return {
       user: {
         ...user,
