@@ -27,7 +27,7 @@ export class ArticleService {
 
     article.author = currentUser;
 
-    article.slug = this.getSlug(article.title);
+    article.slug = this.getSlug(createArticleDto.title);
 
     return await this.articleRepository.save(article);
   }
@@ -38,7 +38,7 @@ export class ArticleService {
 
   private getSlug(title: string): string {
     return (
-      slugify(title) +
+      slugify(title, { lower: true }) +
       '-' +
       ((Math.random() * Math.pow(36, 6)) | 0).toString(36)
     );
