@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { CurrentUser } from 'src/user/decorators/current-user.decorator';
 import { AuthGuard } from 'src/user/guards/auth.guard';
 import { User } from 'src/user/user.entity';
+import { DeleteResult } from 'typeorm';
 import { ArticleService } from './article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponse } from './types/article-response.interface';
@@ -16,14 +26,28 @@ export class ArticleController {
     @CurrentUser() currentUser: User,
     @Body('article') createArticleDto: CreateArticleDto,
   ): Promise<ArticleResponse> {
-    const article = await this.articleService.createArticle(currentUser, createArticleDto);
+    const article = await this.articleService.createArticle(
+      currentUser,
+      createArticleDto,
+    );
     return this.articleService.buildArticleResponse(article);
   }
 
   @Get(':slug')
-  async getSingleArticle(@Param('slug') slug: string): Promise<ArticleResponse> {
+  async getSingleArticle(
+    @Param('slug') slug: string,
+  ): Promise<ArticleResponse> {
     const article = await this.articleService.findBySlug(slug);
 
     return this.articleService.buildArticleResponse(article);
+  }
+
+  @Delete(':slug')
+  @UseGuards(AuthGuard)
+  async deleteArticle(
+    @CurrentUser('id') currentUserId: number,
+    @Param('slug') slug: string,
+  ): Promise<DeleteResult> {
+    return this.articleService.deleteBySlug(currentUserId, slug);
   }
 }
