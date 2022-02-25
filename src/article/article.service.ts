@@ -10,6 +10,7 @@ import { Article } from './article.entity';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponse } from './types/article-response.interface';
 import slugify from 'slugify';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Injectable()
 export class ArticleService {
@@ -55,6 +56,30 @@ export class ArticleService {
     }
 
     return this.articleRepository.delete({ slug });
+  }
+
+  async updateBySlug(
+    currentUserId: number,
+    slug: string,
+    updateArticleDto: UpdateArticleDto,
+  ): Promise<Article> {
+    const article = await this.findBySlug(slug);
+
+    if (!article) {
+      throw new NotFoundException('Article not found');
+    }
+
+    if (article.author.id !== currentUserId) {
+      throw new ForbiddenException('Only author can update article');
+    }
+
+    Object.assign(article, updateArticleDto);
+
+    if (updateArticleDto.title) {
+      article.slug = this.getSlug(updateArticleDto.title);
+    }
+
+    return await this.articleRepository.save(article);
   }
 
   buildArticleResponse(article: Article): ArticleResponse {
