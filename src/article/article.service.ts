@@ -18,13 +18,32 @@ export class ArticleService {
   constructor(
     @InjectRepository(Article)
     private readonly articleRepository: Repository<Article>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
-  async findAll(query: any): Promise<ArticlesResponse> {
+  async findAll(query: any): Promise<any> {
     const queryBuilder = getRepository(Article)
       .createQueryBuilder('articles')
-      .leftJoinAndSelect('articles.author', 'author')
-      .orderBy('articles.createdAt', 'DESC');
+      .leftJoinAndSelect('articles.author', 'author');
+
+    if (query.tag) {
+      queryBuilder.andWhere('articles.tagList LIKE :tag', {
+        tag: `%${query.tag}%`,
+      });
+    }
+
+    if (query.author) {
+      const author = await this.userRepository.findOne({
+        username: query.author
+      });
+
+      queryBuilder.andWhere('articles.authorId = :id', {
+        id: author.id,
+      });
+    }
+
+    queryBuilder.orderBy('articles.createdAt', 'DESC');
 
     const articlesCount = await queryBuilder.getCount();
 
