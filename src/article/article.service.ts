@@ -23,10 +23,20 @@ export class ArticleService {
   async findAll(query: any): Promise<ArticlesResponse> {
     const queryBuilder = getRepository(Article)
       .createQueryBuilder('articles')
-      .leftJoinAndSelect('articles.author', 'author');
+      .leftJoinAndSelect('articles.author', 'author')
+      .orderBy('articles.createdAt', 'DESC');
+
+    const articlesCount = await queryBuilder.getCount();
+
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
 
     const articles = await queryBuilder.getMany();
-    const articlesCount = await queryBuilder.getCount();
 
     return { articles, articlesCount };
   }
