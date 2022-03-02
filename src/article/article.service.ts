@@ -35,7 +35,7 @@ export class ArticleService {
 
     if (query.author) {
       const author = await this.userRepository.findOne({
-        username: query.author
+        username: query.author,
       });
 
       queryBuilder.andWhere('articles.authorId = :id', {
@@ -121,6 +121,25 @@ export class ArticleService {
     }
 
     return await this.articleRepository.save(article);
+  }
+
+  async addArticleToFavorites(slug: string, userId: number): Promise<Article> {
+    const article = await this.findBySlug(slug);
+    const user = await this.userRepository.findOne(userId, {
+      relations: ['favorites'],
+    });
+
+    const isFavorited =
+      user.favorites.findIndex((fav) => fav.id === article.id) !== -1;
+
+    if (!isFavorited) {
+      user.favorites.push(article);
+      article.favoritesCount++;
+      await this.articleRepository.save(article);
+      await this.userRepository.save(user);
+    }
+
+    return article;
   }
 
   buildArticleResponse(article: Article): ArticleResponse {
