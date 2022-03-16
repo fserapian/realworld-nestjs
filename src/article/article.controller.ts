@@ -26,8 +26,8 @@ export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
   @Get()
-  async getArticles(@Query() query: any): Promise<ArticlesResponse> {
-    return await this.articleService.findAll(query);
+  async getArticles(@Query() query: any, @CurrentUser('id') currentUserId: string): Promise<ArticlesResponse> {
+    return await this.articleService.findAll(query, currentUserId);
   }
 
   @Post()

@@ -12,6 +12,7 @@ import { ArticleResponse } from './types/article-response.interface';
 import slugify from 'slugify';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { ArticlesResponse } from './types/articles-response.interface';
+import { ArticleType } from './types/article.type';
 
 @Injectable()
 export class ArticleService {
@@ -22,7 +23,7 @@ export class ArticleService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async findAll(query: any): Promise<any> {
+  async findAll(query: any, currentUserId: string): Promise<ArticlesResponse> {
     const queryBuilder = getRepository(Article)
       .createQueryBuilder('articles')
       .leftJoinAndSelect('articles.author', 'author');
@@ -43,6 +44,21 @@ export class ArticleService {
       });
     }
 
+    if (query.favorited) {
+      const author = await this.userRepository.findOne(
+        { username: query.favorited },
+        { relations: ['favorites'] },
+      );
+
+      const ids = author.favorites.map((fav) => fav.id);
+
+      if (ids.length > 0) {
+        queryBuilder.andWhere('articles.id IN (:...ids)', { ids });
+      } else {
+        queryBuilder.andWhere('1=0');
+      }
+    }
+
     queryBuilder.orderBy('articles.createdAt', 'DESC');
 
     const articlesCount = await queryBuilder.getCount();
@@ -55,9 +71,26 @@ export class ArticleService {
       queryBuilder.offset(query.offset);
     }
 
-    const articles = await queryBuilder.getMany();
+    let favoriteIds: number[] = [];
 
-    return { articles, articlesCount };
+    if (currentUserId) {
+      const currentUser = await this.userRepository.findOne(currentUserId, {
+        relations: ['favorites'],
+      });
+
+      favoriteIds = currentUser.favorites.map((fav) => fav.id);
+    }
+
+    const articles = await queryBuilder.getMany();
+    const articlesWithFavorited: ArticleType[] = articles.map((article) => {
+      const favorited = favoriteIds.includes(article.id);
+      return {
+        ...article,
+        favorited,
+      };
+    });
+
+    return { articles: articlesWithFavorited, articlesCount };
   }
 
   async createArticle(
@@ -154,8 +187,8 @@ export class ArticleService {
     if (articleIndex >= 0) { // article found
       user.favorites.splice(articleIndex, 1);
       article.favoritesCount--;
-      await this.articleRepository.save(article);
       await this.userRepository.save(user);
+      await this.articleRepository.save(article);
     }
 
     return article;
