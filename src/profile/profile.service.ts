@@ -28,9 +28,14 @@ export class ProfileService {
       throw new NotFoundException('Profile not found');
     }
 
+    const follow = await this.followRepository.findOne({
+      followerId: currentUserId,
+      followingId: user.id,
+    });
+
     return {
       ...user,
-      following: false,
+      following: Boolean(follow),
     };
   }
 
@@ -61,6 +66,37 @@ export class ProfileService {
     }
 
     return { ...user, following: true };
+  }
+
+  async unfollowProfile(currentUserId: number, profileUsername: string): Promise<ProfileType> {
+    const user = await this.userRepository.findOne({
+      username: profileUsername,
+    });
+
+    if (!user) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    if (currentUserId === user.id) {
+      throw new BadRequestException('User cannot unfollow himself');
+    }
+
+    /* Longer code */
+    // const follow = await this.followRepository.findOne({
+    //   followerId: currentUserId,
+    //   followingId: user.id,
+    // });
+
+    // if (follow) {
+    //   await this.followRepository.delete(follow);
+    // }
+
+    await this.followRepository.delete({
+      followerId: currentUserId,
+      followingId: user.id,
+    });
+
+    return { ...user, following: false };
   }
 
   buildProfileResponse(profile: ProfileType): ProfileResponse {
