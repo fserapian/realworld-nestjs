@@ -30,7 +30,7 @@ export class ArticleController {
     @CurrentUser('id') currentUserId: number,
     @Query() query: any
   ): Promise<ArticlesResponse> {
-    return await this.articleService.findAll(query, currentUserId);
+    return await this.articleService.getArticles(currentUserId, query);
   }
 
   @Get('feed')

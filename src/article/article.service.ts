@@ -26,7 +26,7 @@ export class ArticleService {
     private readonly followRepository: Repository<Follow>,
   ) {}
 
-  async findAll(currentUserId: number, query: any): Promise<ArticlesResponse> {
+  async getArticles(currentUserId: number, query: any): Promise<ArticlesResponse> {
     const queryBuilder = getRepository(Article)
       .createQueryBuilder('articles')
       .leftJoinAndSelect('articles.author', 'author');
